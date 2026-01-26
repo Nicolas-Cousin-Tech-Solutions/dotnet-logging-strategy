@@ -1,33 +1,33 @@
-# .NET Platform Evolution
+# .NET Logging Strategy (Levels & Noise Reduction)
 
-| Github pages | PDF | .Net |
+| GitHub Pages | PDF | .NET |
 | ------------ | --- | ---- |
-| [![GitHub Pages](https://img.shields.io/badge/GitHub-Pages-brightgreen?style=flat-square&logo=github)](https://nicolas-cousin-tech-solutions.github.io/dotnet-modernization-overview) | [![PDF](https://img.shields.io/badge/PDF-Auto--generated-blue?style=flat-square&logo=githubactions)](https://nicolas-cousin-tech-solutions.github.io/dotnet-modernization-overview/exports/dotnet-modernization-overview.pdf) | [![.NET 8 LTS](https://img.shields.io/badge/.NET-10%20LTS-purple?style=flat-square&logo=dotnet)](https://dotnet.microsoft.com/) |
+| [![GitHub Pages](https://img.shields.io/badge/GitHub-Pages-brightgreen?style=flat-square&logo=github)](https://nicolas-cousin-tech-solutions.github.io/dotnet-logging-strategy) | [![PDF](https://img.shields.io/badge/PDF-Auto--generated-blue?style=flat-square&logo=githubactions)](https://nicolas-cousin-tech-solutions.github.io/dotnet-logging-strategy/exports/dotnet-logging-strategy.pdf) | [![.NET 8 LTS](https://img.shields.io/badge/.NET-8%20LTS-purple?style=flat-square&logo=dotnet)](https://dotnet.microsoft.com/) |
 
-Présentation technique sur l’évolution de l’écosystème **.NET** :
+Présentation technique (format **5 minutes**) sur la **stratégie de logs** dans l’écosystème **.NET** :
 
-- .NET Framework 4.8 → .NET moderne
-- Évolution du langage C# (C# 7.3 → C# 12)
-- ASP.NET Web API → ASP.NET Core API
-- Cadence de releases et stratégie **LTS**
-- Continuité technique et points d’attention (sans migration forcée)
+- Niveaux de logs : `Information` / `Warning` / `Error` / `Critical`
+- Problème courant : **trop de `Error` sur du fonctionnel** (bruit + alerting inefficace)
+- Différenciation **fonctionnel vs technique**
+- Logs structurés (propriétés), `EventId`, corrélation (`CorrelationId` / `TraceId`)
+- Checklist d’équipe : requalification des top erreurs + alignement alerting
 
-Cette présentation est destinée à des équipes **.NET Framework historiques**
-souhaitant comprendre les enjeux et les apports des versions récentes de .NET.
+Cette présentation est destinée à des équipes **backend .NET** (ASP.NET MVC / ASP.NET Core)
+souhaitant améliorer la **qualité opérationnelle** des logs et la pertinence des alertes.
 
 ---
 
 ## 📺 Présentation en ligne (GitHub Pages)
 
 👉 **Slides Reveal.js**  
-[Slides](https://nicolas-cousin-tech-solutions.github.io/dotnet-modernization-overview/)
+[Slides](https://nicolas-cousin-tech-solutions.github.io/dotnet-logging-strategy/)
 
 ---
 
 ## 📄 Export PDF
 
 👉 **Version PDF (générée automatiquement)**  
-[PDF](https://nicolas-cousin-tech-solutions.github.io/dotnet-modernization-overview/exports/dotnet-modernization-overview.pdf)
+[PDF](https://nicolas-cousin-tech-solutions.github.io/dotnet-logging-strategy/exports/dotnet-logging-strategy.pdf)
 
 Le PDF est généré via GitHub Actions à partir de la version Reveal.js,
 afin de garantir la cohérence entre les supports.
@@ -36,16 +36,17 @@ afin de garantir la cohérence entre les supports.
 
 ## 🧭 Contenu de la présentation
 
-- Positionnement .NET Framework vs .NET moderne
-- Différences runtime, outillage et performances
-- Évolution du langage C# (syntaxe, expressivité, sécurité)
-- ASP.NET Web API vs ASP.NET Core API
-- Cycle de vie et support (LTS / non-LTS)
-- Points à étudier avant toute démarche de migration
-- Questions fréquentes (FAQ) par thème
+- Symptôme : alerting pollué par des faux positifs (fonctionnel loggé en `Error`)
+- Règle d’or : **niveau = action attendue** (impact opérationnel)
+- Fonctionnel vs technique : critères et exemples
+- Exemples : requalifier `Error` → `Warning` lorsque récupérable/attendu
+- Logs structurés : propriétés systématiques (OrderId, CustomerId, etc.)
+- `EventId` : standardisation, filtrage, dashboards
+- Corrélation : `CorrelationId` / `TraceId` pour diagnostiquer vite
+- Checklist : “Top 20 logs `Error`” → downgrade si fonctionnel + règles d’alerting
 
-> ⚠️ La migration n’est **pas** l’objectif immédiat de cette présentation.
-> Elle s’inscrit dans une continuité pédagogique.
+> ⚠️ L’objectif est de restaurer la **confiance** dans le monitoring :
+> moins de bruit, des alertes exploitables, et un diagnostic plus rapide.
 
 ---
 
@@ -73,7 +74,14 @@ Aucune action manuelle n’est requise.
 
 - État de l’écosystème : **janvier 2026**
 - .NET 8 validé (LTS)
-- .NET 10 identifié comme futur LTS (non encore validé côté architecture)
+- Pratiques applicables à :
+  - ASP.NET MVC (.NET Framework 4.8) via frameworks de logs existants
+  - ASP.NET Core (.NET 6/7/8) via `Microsoft.Extensions.Logging`
+
+Sigles utilisés dans les notes des slides :
+- SLO (Service Level Objective) : objectif de qualité de service mesurable (disponibilité, latence, taux d’erreur).
+- TraceId / CorrelationId : identifiants de traçage pour relier les événements d’une même requête.
+- DB : base de données (Database).
 
 ---
 
@@ -85,7 +93,7 @@ docs/
  ├─ slides.md
  ├─ reveal/
  └─ exports/
-    └─ dotnet-modernization-overview.pdf
+    └─ dotnet-logging-strategy.pdf
 
 scripts/
  ├─ copy-reveal.js
