@@ -1,0 +1,62 @@
+name: Export Reveal to PDF
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "docs/**"
+      - "scripts/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/export-pdf.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  pdf:
+    # Évite la boucle si on commit le PDF avec le bot
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Ensure reveal assets in docs
+        run: pnpm run prepare-reveal
+
+      - name: Install Playwright Chromium deps
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Export PDF
+        run: pnpm run export:pdf
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: presentation-pdf
+          path: docs/exports/dotnet-modernization-overview.pdf
+          if-no-files-found: error
+
+      - name: Commit PDF into docs/exports (for GitHub Pages)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/exports/dotnet-modernization-overview.pdf
+          git commit -m "chore: update exported PDF" || echo "No changes to commit"
+          git push

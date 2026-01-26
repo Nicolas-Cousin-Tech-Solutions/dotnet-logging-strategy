@@ -1,0 +1,27 @@
+// See https://containers.dev/implementors/json_reference/ for configuration reference
+{
+  "name": "Dotnet Logging Strategy",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "remoteUser": "node",
+  "features": {
+    "ghcr.io/devcontainers-extra/features/pnpm:2": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/nils-geistmann/devcontainers-features/zsh:0": {
+      "plugins": "git z pnpm"
+    },
+    "ghcr.io/devcontainers-extra/features/zsh-plugins:0": {
+      "omzPlugins": "git z pnpm",
+      "omzCustom": "https://github.com/zsh-users/zsh-autosuggestions https://github.com/zsh-users/zsh-syntax-highlighting"
+     }
+  },
+  // "customizations": {
+  //   "vscode": {
+  //     "settings": {
+  //       "terminal.integrated.defaultProfile.linux": "zsh"
+  //     }
+  //   }
+  // },
+  "postCreateCommand": "sudo chsh -s $(which zsh) node || true"
+}
