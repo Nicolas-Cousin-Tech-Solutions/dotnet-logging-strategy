@@ -13,7 +13,7 @@ const SITE_DIR = path.resolve(__dirname, "..", "docs");
 
 // PDF output (servi par GitHub Pages)
 const OUT_DIR = path.join(SITE_DIR, "exports");
-const OUT_FILE = path.join(OUT_DIR, "dotnet-modernization-overview.pdf");
+const OUT_FILE = path.join(OUT_DIR, "dotnet-logging-strategy.pdf");
 
 // Port local pour servir docs/
 const PORT = 4173;
@@ -77,13 +77,7 @@ async function main() {
   // Attendre que Reveal soit prêt (évite capture trop tôt)
   await page.waitForSelector(".reveal.ready", { timeout: 30000 });
 
-  // Attendre que le contenu (markdown) soit réellement injecté (spécifique à ton cas)
-  await page.waitForFunction(() => {
-    const t = document.body.innerText || "";
-    return t.includes("QUESTIONS") && t.includes("Support pédagogique") && t.includes("Réutilisation");
-  }, { timeout: 30000 });
-
-    // Petit buffer pour les fonts/highlight après rendu
+  // Petit buffer pour les fonts/highlight après rendu
   await page.waitForTimeout(500);
 
   await page.pdf({
