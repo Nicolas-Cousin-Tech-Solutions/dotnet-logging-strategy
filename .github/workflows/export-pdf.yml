@@ -50,13 +50,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: presentation-pdf
-          path: docs/exports/dotnet-modernization-overview.pdf
+          path: docs/exports/dotnet-logging-strategy.pdf
           if-no-files-found: error
 
       - name: Commit PDF into docs/exports (for GitHub Pages)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/exports/dotnet-modernization-overview.pdf
+          git add docs/exports/dotnet-logging-strategy.pdf
           git commit -m "chore: update exported PDF" || echo "No changes to commit"
           git push
