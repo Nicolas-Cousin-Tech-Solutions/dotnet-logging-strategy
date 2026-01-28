@@ -1,6 +1,8 @@
 # Stratégie de logs en C#/.NET  
 ## Stop aux `Error` pour du fonctionnel
 
+<small>Ressources & version officielle : [nicolas-cousin.com](https://nicolas-cousin.com/)</small>
+
 Note:
 - Contexte : beaucoup de logs en erreur sur des cas fonctionnels.
 - Objectif : remettre les niveaux au bon endroit pour avoir des alertes fiables.
