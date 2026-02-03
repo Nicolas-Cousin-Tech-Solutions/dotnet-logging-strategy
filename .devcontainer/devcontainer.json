@@ -23,5 +23,5 @@
   //     }
   //   }
   // },
-  "postCreateCommand": "sudo chsh -s $(which zsh) node || true"
+  "postCreateCommand": "sudo chsh -s $(which zsh) node || true && pnpm install && pnpm exec playwright install",
 }
