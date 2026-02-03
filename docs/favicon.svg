@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="48" fill="#5C2D91" stroke="#fff" stroke-width="2"/>
+  
+  <!-- Document/log icon -->
+  <rect x="30" y="25" width="40" height="50" rx="2" fill="#fff"/>
+  
+  <!-- Log lines representing different log levels -->
+  <rect x="35" y="32" width="20" height="3" rx="1.5" fill="#28a745"/> <!-- Success/Info - green -->
+  <rect x="35" y="42" width="25" height="3" rx="1.5" fill="#ffc107"/> <!-- Warning - yellow -->
+  <rect x="35" y="52" width="30" height="3" rx="1.5" fill="#dc3545"/> <!-- Error - red -->
+  <rect x="35" y="62" width="15" height="3" rx="1.5" fill="#28a745"/> <!-- Info - green -->
+  
+  <!-- Small C# symbol in bottom right -->
+  <text x="58" y="72" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#5C2D91">C#</text>
+</svg>
