@@ -91,6 +91,7 @@ logger.LogError(DbFailure, ex,
 ---
 
 ## Exceptions : simple règle
+
 - Cas métier gérés **sans** exception
 - Exceptions réservées à l’imprévu technique
 
@@ -100,6 +101,7 @@ Note:
 ---
 
 ## Mini-checklist (actionnable en équipe)
+
 1) Table “niveau par scénario” (fonctionnel vs technique)
 2) Catalogue `EventId` + propriétés standardisées
 3) Alerter surtout sur `Error/Critical` (Warnings ciblés au besoin)
@@ -111,6 +113,7 @@ Note:
 ---
 
 ## Message final
+
 - `Warning` = incident **fonctionnel** maîtrisé / récupérable
 - `Error` = incident **technique** ou échec non récupérable
 - Moins de bruit → meilleures alertes → moins de temps perdu
