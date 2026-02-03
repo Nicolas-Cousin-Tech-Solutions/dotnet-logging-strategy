@@ -7,6 +7,7 @@ Note:
 - Contexte : trop de `Error` pour des cas métier → alerting inutilisable.
 - Objectif : requalifier pour retrouver des alertes fiables.
 - Sigle : .NET = runtime + bibliothèques Microsoft.
+- Durée cible : 5–10 min, rester haut niveau, exemples courts.
 
 ---
 
@@ -16,6 +17,7 @@ Note:
 
 Note:
 - “Si tout est en erreur, plus rien n’est une erreur.”
+- Ancrer sur l’impact : perte de confiance, réveils inutiles, temps d’enquête.
 
 ---
 
@@ -27,6 +29,7 @@ Note:
 
 Note:
 - Le niveau reflète l’impact opérationnel, pas la “gravité métier”.
+- Relier à l’action attendue : qui doit réagir, en combien de temps.
 
 ---
 
@@ -39,6 +42,7 @@ Note:
 
 Note:
 - Par défaut, un échec métier ne déclenche pas d’astreinte infra.
+- Demander aux équipes : “Qui est réveillé par ce log ?” pour choisir le niveau.
 
 --
 ### Exemples — Fonctionnel
@@ -52,6 +56,7 @@ logger.LogInformation("Order already processed (idempotent). OrderId={OrderId}",
 
 Note:
 - Idempotence = répéter produit le même résultat, donc pas d’alerte.
+- Message à passer : enrichir le log métier (OrderId/CustomerId) pour support.
 
 --
 ### Exemples — Technique
@@ -66,6 +71,7 @@ catch (SqlException ex)
 
 Note:
 - `Error` quand l’opération échoue pour cause technique et nécessite investigation.
+- Soulever : garder l’exception pour conserver la stacktrace.
 
 ---
 
@@ -97,6 +103,7 @@ logger.LogError(DbFailure, ex,
 
 Note:
 - Les exceptions métier génèrent du bruit (stacktrace) et coûtent cher.
+- Question de triage : “est-ce attendu ?” → pas d’exception, donc pas d’alerting.
 
 ---
 
@@ -109,6 +116,7 @@ Note:
 
 Note:
 - Ciblé pour un run 1 sprint : on nettoie les 20 `Error` les plus fréquents.
+- Proposer un owner par `EventId` et un seuil d’alerte par catégorie.
 
 ---
 
@@ -120,3 +128,4 @@ Note:
 
 Note:
 - Objectif : regagner la confiance dans le monitoring.
+- Call to action : lancer l’audit Top 20 dès la fin de la session.
