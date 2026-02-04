@@ -234,7 +234,6 @@ Note:
 Note:
 - "Si tout est en erreur, plus rien n'est une erreur" : syndrome du loup.
 - Objectif : garder Error comme signal fiable d'incident technique.
-- SLO = Service Level Objective (objectif de qualité de service mesurable).
 
 ---
 
@@ -329,7 +328,6 @@ Note:
 
 Note:
 - `throw ex;` réinitialise la stacktrace → perte d'information.
-- TraceId / CorrelationId = identifiants pour relier les logs d'une même requête.
 
 --
 ### Best practices (suite)
