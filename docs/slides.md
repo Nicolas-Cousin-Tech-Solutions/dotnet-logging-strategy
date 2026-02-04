@@ -177,8 +177,8 @@ Note:
 ### Exemple `EventId`
 
 ```csharp
-private static readonly EventId PaymentRefused = new(12010, nameof(PaymentRefused));
-private static readonly EventId DbFailure      = new(50010, nameof(DbFailure));
+private static readonly EventId PaymentRefused = new EventId(12010, nameof(PaymentRefused));
+private static readonly EventId DbFailure      = new EventId(50010, nameof(DbFailure));
 
 logger.LogWarning(PaymentRefused,
     "Payment refused. Reason={Reason} OrderId={OrderId}", reason, orderId);
@@ -381,7 +381,7 @@ Note:
 ### ✅ Après : validation explicite → Warning
 
 ```csharp
-private static readonly EventId InsufficientFunds = new(12001, nameof(InsufficientFunds));
+private static readonly EventId InsufficientFunds = new EventId(12001, nameof(InsufficientFunds));
 
 public async Task<OrderResult> ProcessOrder(int orderId)
 {
@@ -427,8 +427,8 @@ if (await _orderRepository.Exists(orderId))
     return Result.AlreadyProcessed();
 }
 
-private static readonly EventId ValidationFailed = new(12002, nameof(ValidationFailed));
-private static readonly EventId OrderAlreadyProcessed = new(12003, nameof(OrderAlreadyProcessed));
+private static readonly EventId ValidationFailed = new EventId(12002, nameof(ValidationFailed));
+private static readonly EventId OrderAlreadyProcessed = new EventId(12003, nameof(OrderAlreadyProcessed));
 ```
 
 Note:
@@ -457,8 +457,8 @@ catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.RequestTim
     throw;
 }
 
-private static readonly EventId DatabaseFailure = new(50001, nameof(DatabaseFailure));
-private static readonly EventId ExternalApiTimeout = new(50002, nameof(ExternalApiTimeout));
+private static readonly EventId DatabaseFailure = new EventId(50001, nameof(DatabaseFailure));
+private static readonly EventId ExternalApiTimeout = new EventId(50002, nameof(ExternalApiTimeout));
 ```
 
 Note:
@@ -498,7 +498,7 @@ public class GlobalExceptionMiddleware
         }
     }
 
-    private static readonly EventId UnhandledException = new(50000, nameof(UnhandledException));
+    private static readonly EventId UnhandledException = new EventId(50000, nameof(UnhandledException));
 }
 ```
 
@@ -507,6 +507,44 @@ Note:
 - Error justifié : exception inattendue = incident technique.
 - TraceId : permet de corréler avec les autres logs de la requête.
 - À enregistrer dans Startup : `app.UseMiddleware<GlobalExceptionMiddleware>();`.
+
+---
+
+## Variantes selon le runtime
+
+Présentation rapide de la même logique avec le bon style pour chaque couple .NET/C#.
+
+--
+### .NET Framework 4.8 — C# 7.3
+
+```csharp
+private static readonly EventId PaymentRefused = new EventId(12010, nameof(PaymentRefused));
+private static readonly EventId DbFailure      = new EventId(50010, nameof(DbFailure));
+
+logger.LogWarning(PaymentRefused,
+    "Payment refused. Reason={Reason} OrderId={OrderId}", reason, orderId);
+
+logger.LogError(DbFailure, ex,
+    "Database failure. OrderId={OrderId}", orderId);
+```
+
+--
+### .NET 8 — C# 12
+
+```csharp
+private static readonly EventId PaymentRefused = new(12010, nameof(PaymentRefused));
+private static readonly EventId DbFailure      = new(50010, nameof(DbFailure));
+
+logger.LogWarning(PaymentRefused,
+    "Payment refused. Reason={Reason} OrderId={OrderId}", reason, orderId);
+
+logger.LogError(DbFailure, ex,
+    "Database failure. OrderId={OrderId}", orderId);
+```
+
+Note:
+- Bloc 4.8 compatible C# 7.3 (pas de target-typed `new`).
+- Bloc .NET 8 exploite la syntaxe récente (`new(...)`) tout en conservant la même API `ILogger`.
 
 ---
 
