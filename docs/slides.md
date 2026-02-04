@@ -378,6 +378,8 @@ Note:
 ### ✅ Après : validation explicite → Warning
 
 *-*
+private static readonly EventId InsufficientFunds = new(12001, nameof(InsufficientFunds));
+
 public async Task<OrderResult> ProcessOrder(int orderId)
 {
     var order = await _orderRepository.GetById(orderId);
@@ -394,8 +396,6 @@ public async Task<OrderResult> ProcessOrder(int orderId)
     // Process order...
     return OrderResult.Success();
 }
-
-private static readonly EventId InsufficientFunds = new(12001, nameof(InsufficientFunds));
 *-*
 
 Note:
