@@ -123,6 +123,44 @@ Note:
 - Dashboards précis : taux d'erreur par CustomerId.
 - Format standardisé, lisible par humains ET machines.
 
+--
+### Vue dans un système de logs centralisé
+
+**❌ Log non structuré (Datadog/Elasticsearch/Seq)**
+```json
+{
+  "timestamp": "2026-02-04T10:15:23.456Z",
+  "level": "Warning",
+  "message": "Payment refused for order 12345 and customer C-789 due to insufficient funds"
+}
+```
+**Problème** : Impossible de filtrer par `OrderId=12345` ou `CustomerId=C-789`
+
+Note:
+- Dans un système centralisé, le log non structuré arrive comme une simple chaîne.
+- Pour filtrer par OrderId, il faut faire une recherche texte approximative.
+- Pas de possibilité de créer des facettes ou des agrégations précises.
+
+--
+### Vue dans un système de logs centralisé
+
+**✅ Log structuré (Datadog/Elasticsearch/Seq)**
+```json
+{
+  "timestamp": "2026-02-04T10:15:23.456Z",
+  "level": "Warning",
+  "message": "Payment refused: insufficient funds",
+  "OrderId": 12345,
+  "CustomerId": "C-789"
+}
+```
+**Filtres possibles** : `OrderId:12345`, `CustomerId:"C-789"`, dashboards par client
+
+Note:
+- Chaque propriété devient un champ indexable et filtrable.
+- Possibilité de créer des facettes, graphiques et alertes ciblées.
+- Query: `level:Warning AND CustomerId:C-789` → tous les warnings de ce client.
+
 ---
 
 ## Logs structurés + `EventId`
