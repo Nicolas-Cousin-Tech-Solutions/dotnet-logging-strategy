@@ -48,12 +48,12 @@ Note:
 --
 ### Exemples — Fonctionnel
 
-*-*
+```csharp
 logger.LogWarning("Payment refused: insufficient funds. OrderId={OrderId} CustomerId={CustomerId}",
     orderId, customerId);
 
 logger.LogInformation("Order already processed (idempotent). OrderId={OrderId}", orderId);
-*-*
+```
 
 Note:
 - Idempotence = répéter produit le même résultat, donc pas d’alerte.
@@ -62,13 +62,13 @@ Note:
 --
 ### Exemples — Technique
 
-*-*
+```csharp
 catch (SqlException ex)
 {
     logger.LogError(ex, "Database failure while confirming order. OrderId={OrderId}", orderId);
     throw;
 }
-*-*
+```
 
 Note:
 - `Error` quand l’opération échoue pour cause technique et nécessite investigation.
@@ -90,14 +90,14 @@ Note:
 --
 ### ❌ Exemple — Log non structuré
 
-*-*
+```csharp
 // ❌ Mauvais : concaténation de strings
 logger.LogWarning("Payment refused for order " + orderId + 
     " and customer " + customerId + " due to insufficient funds");
 
 logger.LogError("Database connection failed while processing order " + 
     orderId + " at " + DateTime.Now);
-*-*
+```
 
 Note:
 - Tous les détails sont noyés dans le message.
@@ -109,14 +109,14 @@ Note:
 --
 ### ✅ Exemple — Log structuré
 
-*-*
+```csharp
 // ✅ Bon : propriétés structurées
 logger.LogWarning("Payment refused: insufficient funds. OrderId={OrderId} CustomerId={CustomerId}",
     orderId, customerId);
 
 logger.LogError(ex, "Database connection failed. OrderId={OrderId}",
     orderId);
-*-*
+```
 
 Note:
 - Propriétés typées et indexables.
@@ -128,13 +128,13 @@ Note:
 ### Vue dans un système de logs centralisé
 
 **❌ Log non structuré (Datadog/Elasticsearch/Seq)**
-*-*
+```json
 {
   "timestamp": "2026-02-04T10:15:23.456Z",
   "level": "Warning",
   "message": "Payment refused for order 12345 and customer C-789 due to insufficient funds"
 }
-*-*
+```
 **Problème** : Impossible de filtrer par `OrderId=12345` ou `CustomerId=C-789`
 
 Note:
@@ -146,7 +146,7 @@ Note:
 ### Vue dans un système de logs centralisé
 
 **✅ Log structuré (Datadog/Elasticsearch/Seq)**
-*-*
+```json
 {
   "timestamp": "2026-02-04T10:15:23.456Z",
   "level": "Warning",
@@ -154,7 +154,7 @@ Note:
   "OrderId": 12345,
   "CustomerId": "C-789"
 }
-*-*
+```
 **Filtres possibles** : `OrderId:12345`, `CustomerId:"C-789"`, dashboards par client
 
 Note:
@@ -176,7 +176,7 @@ Note:
 --
 ### Exemple `EventId`
 
-*-*
+```csharp
 private static readonly EventId PaymentRefused = new(12010, nameof(PaymentRefused));
 private static readonly EventId DbFailure      = new(50010, nameof(DbFailure));
 
@@ -185,7 +185,7 @@ logger.LogWarning(PaymentRefused,
 
 logger.LogError(DbFailure, ex,
     "Database failure. OrderId={OrderId}", orderId);
-*-*
+```
 
 Note:
 - Convention EventId : 12xxx = business (Warning/Info), 50xxx = technique (Error).
@@ -318,6 +318,12 @@ Note:
 **Rethrow correct**
 - Utiliser `throw;` (pas `throw ex;`) pour garder la stacktrace
 
+Note:
+- `throw ex;` réinitialise la stacktrace → perte d'information.
+
+--
+### Best practices (suite)
+
 **Logs structurés**
 - Toujours inclure les identifiants métier (OrderId, CustomerId)
 - Inclure CorrelationId/TraceId pour traçabilité
@@ -325,9 +331,6 @@ Note:
 **EventId standardisé**
 - Permet le suivi (KPI, requêtes, dashboards)
 - Convention : 12xxx = business, 50xxx = technique
-
-Note:
-- `throw ex;` réinitialise la stacktrace → perte d'information.
 
 --
 ### Best practices (suite)
@@ -350,7 +353,7 @@ Illustration du passage "MOA-intent" vers "Best practice"
 --
 ### ❌ Avant : exception métier → Error
 
-*-*
+```csharp
 public async Task<OrderResult> ProcessOrder(int orderId)
 {
     try
@@ -368,7 +371,7 @@ public async Task<OrderResult> ProcessOrder(int orderId)
         return OrderResult.Failed("Insufficient funds");
     }
 }
-*-*
+```
 
 Note:
 - Problème : exception pour cas métier attendu (validation de solde).
@@ -377,7 +380,7 @@ Note:
 --
 ### ✅ Après : validation explicite → Warning
 
-*-*
+```csharp
 private static readonly EventId InsufficientFunds = new(12001, nameof(InsufficientFunds));
 
 public async Task<OrderResult> ProcessOrder(int orderId)
@@ -396,7 +399,7 @@ public async Task<OrderResult> ProcessOrder(int orderId)
     // Process order...
     return OrderResult.Success();
 }
-*-*
+```
 
 Note:
 - Pas d'exception : validation explicite du cas métier.
@@ -406,7 +409,7 @@ Note:
 --
 ### Mapping simple : Business → Warning
 
-*-*
+```csharp
 // Cas métier attendus → Warning/Information
 if (!IsValidInput(input))
 {
@@ -426,7 +429,7 @@ if (await _orderRepository.Exists(orderId))
 
 private static readonly EventId ValidationFailed = new(12002, nameof(ValidationFailed));
 private static readonly EventId OrderAlreadyProcessed = new(12003, nameof(OrderAlreadyProcessed));
-*-*
+```
 
 Note:
 - Validation échouée : Warning (à surveiller, à améliorer).
@@ -436,7 +439,7 @@ Note:
 --
 ### Mapping simple : Technique → Error
 
-*-*
+```csharp
 // Cas technique/infrastructure → Error
 catch (SqlException ex)
 {
@@ -456,7 +459,7 @@ catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.RequestTim
 
 private static readonly EventId DatabaseFailure = new(50001, nameof(DatabaseFailure));
 private static readonly EventId ExternalApiTimeout = new(50002, nameof(ExternalApiTimeout));
-*-*
+```
 
 Note:
 - Exceptions techniques : Error (incident nécessitant investigation).
@@ -466,7 +469,7 @@ Note:
 --
 ### Middleware global : boundary ASP.NET Core
 
-*-*
+```csharp
 public class GlobalExceptionMiddleware
 {
     private readonly RequestDelegate _next;
@@ -497,7 +500,7 @@ public class GlobalExceptionMiddleware
 
     private static readonly EventId UnhandledException = new(50000, nameof(UnhandledException));
 }
-*-*
+```
 
 Note:
 - Middleware global : attrape uniquement les exceptions non gérées (techniques).
