@@ -8,6 +8,7 @@ Note:
 - Objectif : requalifier pour retrouver des alertes fiables.
 - Sigle : .NET = runtime + bibliothèques Microsoft.
 - Durée cible : 5–10 min, rester haut niveau, exemples courts.
+- SLO = Service Level Objective (objectif de qualité de service mesurable).
 
 ---
 
@@ -47,12 +48,12 @@ Note:
 --
 ### Exemples — Fonctionnel
 
-```csharp
+*-*
 logger.LogWarning("Payment refused: insufficient funds. OrderId={OrderId} CustomerId={CustomerId}",
     orderId, customerId);
 
 logger.LogInformation("Order already processed (idempotent). OrderId={OrderId}", orderId);
-```
+*-*
 
 Note:
 - Idempotence = répéter produit le même résultat, donc pas d’alerte.
@@ -61,13 +62,13 @@ Note:
 --
 ### Exemples — Technique
 
-```csharp
+*-*
 catch (SqlException ex)
 {
     logger.LogError(ex, "Database failure while confirming order. OrderId={OrderId}", orderId);
     throw;
 }
-```
+*-*
 
 Note:
 - `Error` quand l’opération échoue pour cause technique et nécessite investigation.
@@ -89,14 +90,14 @@ Note:
 --
 ### ❌ Exemple — Log non structuré
 
-```csharp
+*-*
 // ❌ Mauvais : concaténation de strings
 logger.LogWarning("Payment refused for order " + orderId + 
     " and customer " + customerId + " due to insufficient funds");
 
 logger.LogError("Database connection failed while processing order " + 
     orderId + " at " + DateTime.Now);
-```
+*-*
 
 Note:
 - Tous les détails sont noyés dans le message.
@@ -108,14 +109,14 @@ Note:
 --
 ### ✅ Exemple — Log structuré
 
-```csharp
+*-*
 // ✅ Bon : propriétés structurées
 logger.LogWarning("Payment refused: insufficient funds. OrderId={OrderId} CustomerId={CustomerId}",
     orderId, customerId);
 
 logger.LogError(ex, "Database connection failed. OrderId={OrderId}",
     orderId);
-```
+*-*
 
 Note:
 - Propriétés typées et indexables.
@@ -127,13 +128,13 @@ Note:
 ### Vue dans un système de logs centralisé
 
 **❌ Log non structuré (Datadog/Elasticsearch/Seq)**
-```json
+*-*
 {
   "timestamp": "2026-02-04T10:15:23.456Z",
   "level": "Warning",
   "message": "Payment refused for order 12345 and customer C-789 due to insufficient funds"
 }
-```
+*-*
 **Problème** : Impossible de filtrer par `OrderId=12345` ou `CustomerId=C-789`
 
 Note:
@@ -145,7 +146,7 @@ Note:
 ### Vue dans un système de logs centralisé
 
 **✅ Log structuré (Datadog/Elasticsearch/Seq)**
-```json
+*-*
 {
   "timestamp": "2026-02-04T10:15:23.456Z",
   "level": "Warning",
@@ -153,7 +154,7 @@ Note:
   "OrderId": 12345,
   "CustomerId": "C-789"
 }
-```
+*-*
 **Filtres possibles** : `OrderId:12345`, `CustomerId:"C-789"`, dashboards par client
 
 Note:
@@ -168,10 +169,14 @@ Note:
 - `EventId` pour classer, filtrer, dashboarder
 - Pas de concaténation de strings
 
+Note:
+- TraceId / CorrelationId = identifiants pour relier les logs d'une même requête.
+- Permet de suivre une transaction de bout en bout dans les logs.
+
 --
 ### Exemple `EventId`
 
-```csharp
+*-*
 private static readonly EventId PaymentRefused = new(12010, nameof(PaymentRefused));
 private static readonly EventId DbFailure      = new(50010, nameof(DbFailure));
 
@@ -180,7 +185,327 @@ logger.LogWarning(PaymentRefused,
 
 logger.LogError(DbFailure, ex,
     "Database failure. OrderId={OrderId}", orderId);
-```
+*-*
+
+Note:
+- Convention EventId : 12xxx = business (Warning/Info), 50xxx = technique (Error).
+- Permet des requêtes ciblées et des dashboards par type d'événement.
+
+---
+
+## Exceptions & niveaux de log
+
+Exception ≠ toujours une "erreur"
+- C'est un mécanisme technique de signalement
+- Le niveau de log reflète l'impact et l'action attendue
+
+Note:
+- Une exception technique peut signaler un cas attendu (validation, règle métier).
+- Le choix du niveau de log doit refléter l'impact opérationnel, pas le mot "exception".
+
+--
+### Niveaux de log : action attendue
+
+**`Warning`** = situation métier à surveiller / analyser
+- Règle métier non satisfaite, refus, validation
+- Action : suivi, analyse, amélioration fonctionnelle
+
+**`Error`** = incident technique / dysfonctionnement
+- DB indisponible, bug, timeout non récupérable
+- Action : investigation technique immédiate, escalade si nécessaire
+
+Note:
+- Warning : pilotage métier, amélioration continue, pas d'alerte technique systématique.
+- Error : signal d'incident nécessitant intervention infra/dev pour restaurer le service.
+
+--
+### Pourquoi éviter Error pour le fonctionnel
+
+**Trop d'Error = perte de confiance**
+- Alertes noyées dans le bruit fonctionnel
+- Équipes désensibilisées → réactions plus lentes
+- Difficulté à distinguer vrais incidents des cas métier
+
+**Conséquence opérationnelle**
+- Les vraies pannes techniques passent inaperçues
+- Temps de détection et de résolution allongé
+- Impact sur SLO et disponibilité
+
+Note:
+- "Si tout est en erreur, plus rien n'est une erreur" : syndrome du loup.
+- Objectif : garder Error comme signal fiable d'incident technique.
+- SLO = Service Level Objective (objectif de qualité de service mesurable).
+
+---
+
+## Compromis MOA/MOE (gagnant-gagnant)
+
+**Objectif MOA : visibilité + pilotage**
+- Suivre les irritants fonctionnels (refus, rejets, validations)
+- Piloter l'amélioration continue du métier
+
+**Objectif MOE/OPS : signal fiable**
+- Détecter rapidement les incidents techniques
+- Minimiser les fausses alertes et le bruit
+
+Note:
+- MOA = Maîtrise d'Ouvrage (métier, product).
+- MOE = Maîtrise d'Œuvre (dev, tech).
+- OPS = Opérations (infra, run, astreinte).
+
+--
+### Proposition de compromis
+
+**Fonctionnel attendu/récupérable**
+- `Warning` ou `Information` + `EventId` + propriétés structurées
+- Dashboards dédiés pour le suivi métier
+- Alertes possibles sur Warning ciblés (volume, seuil, tendance)
+
+**Technique/non récupérable**
+- `Error` ou `Critical` + alerte immédiate
+- Escalade automatique vers l'équipe technique
+
+Note:
+- La visibilité MOA passe aussi par : métriques (compteurs), taux de refus, tableaux de bord.
+- Pas uniquement par Error : Warning bien exploité = meilleure visibilité sans pollution.
+
+--
+### Exemple concret
+
+**Visibilité métier sans Error**
+- Dashboard "Taux de refus de paiement" (Warning)
+- Dashboard "Validations échouées par règle" (EventId)
+- Alerte si taux > seuil pendant X minutes
+
+**Alertes techniques fiables**
+- Error = DB down, API timeout, bug → astreinte immédiate
+- Pas de bruit fonctionnel → temps de réaction amélioré
+
+Note:
+- Exemple : Warning "Insufficient funds" agrégé par heure → dashboard MOA.
+- Alerte si > 10% de refus → investigation métier (pas technique).
+- Error "SqlException" → alerte immédiate équipe OPS.
+
+---
+
+## Best practices : exceptions & logging
+
+**Éviter les exceptions pour le flux métier normal**
+- Préférer validation explicite, pattern Result/Try
+- Exception = cas exceptionnel, pas règle métier
+
+Note:
+- Les exceptions ont un coût (stacktrace, performance).
+- Si c'est attendu (validation), ce n'est pas exceptionnel → pas d'exception.
+
+--
+### Best practices (suite)
+
+**Catch ciblé**
+- Attraper des exceptions spécifiques (`SqlException`, `HttpRequestException`)
+- Éviter `catch(Exception)` hors "frontière" (middleware global)
+
+**Logging unique**
+- Éviter le double log (local + global)
+- Décider où l'exception est loggée (une seule fois)
+
+Note:
+- Catch ciblé = on sait ce qu'on gère, on peut adapter la réponse.
+- Double log = pollution, difficulté à corréler, incohérence possible.
+
+--
+### Best practices (suite)
+
+**Rethrow correct**
+- Utiliser `throw;` (pas `throw ex;`) pour garder la stacktrace
+
+**Logs structurés**
+- Toujours inclure les identifiants métier (OrderId, CustomerId)
+- Inclure CorrelationId/TraceId pour traçabilité
+
+**EventId standardisé**
+- Permet le suivi (KPI, requêtes, dashboards)
+- Convention : 12xxx = business, 50xxx = technique
+
+Note:
+- `throw ex;` réinitialise la stacktrace → perte d'information.
+- TraceId / CorrelationId = identifiants pour relier les logs d'une même requête.
+
+--
+### Best practices (suite)
+
+**Données sensibles**
+- Éviter PII dans les logs
+- Masquer ou anonymiser les données personnelles
+
+Note:
+- PII = Personally Identifiable Information (données personnelles identifiantes).
+- Exemples PII : email, numéro de carte bancaire, adresse, numéro de sécu.
+- Risque : conformité RGPD, sécurité, fuites de données.
+
+---
+
+## Exemples de code
+
+Illustration du passage "MOA-intent" vers "Best practice"
+
+--
+### ❌ Avant : exception métier → Error
+
+*-*
+public async Task<OrderResult> ProcessOrder(int orderId)
+{
+    try
+    {
+        var order = await _orderRepository.GetById(orderId);
+        if (order.Amount > customer.Balance)
+        {
+            throw new InsufficientFundsException("Customer has insufficient funds");
+        }
+        // ...
+    }
+    catch (InsufficientFundsException ex)
+    {
+        _logger.LogError(ex, "Order processing failed. OrderId={OrderId}", orderId);
+        return OrderResult.Failed("Insufficient funds");
+    }
+}
+*-*
+
+Note:
+- Problème : exception pour cas métier attendu (validation de solde).
+- LogError pour un cas fonctionnel → pollution des alertes techniques.
+
+--
+### ✅ Après : validation explicite → Warning
+
+*-*
+public async Task<OrderResult> ProcessOrder(int orderId)
+{
+    var order = await _orderRepository.GetById(orderId);
+    var customer = await _customerRepository.GetById(order.CustomerId);
+    
+    if (order.Amount > customer.Balance)
+    {
+        _logger.LogWarning(InsufficientFunds, 
+            "Payment refused: insufficient funds. OrderId={OrderId} CustomerId={CustomerId} Amount={Amount} Balance={Balance}",
+            orderId, customer.Id, order.Amount, customer.Balance);
+        return OrderResult.Failed("Insufficient funds");
+    }
+    
+    // Process order...
+    return OrderResult.Success();
+}
+
+private static readonly EventId InsufficientFunds = new(12001, nameof(InsufficientFunds));
+*-*
+
+Note:
+- Pas d'exception : validation explicite du cas métier.
+- LogWarning + EventId : signal métier sans polluer Error.
+- Propriétés structurées : filtrage facile, dashboards précis.
+
+--
+### Mapping simple : Business → Warning
+
+*-*
+// Cas métier attendus → Warning/Information
+if (!IsValidInput(input))
+{
+    _logger.LogWarning(ValidationFailed,
+        "Input validation failed. OrderId={OrderId} Reason={Reason}",
+        orderId, validationResult.Reason);
+    return Result.Invalid();
+}
+
+if (await _orderRepository.Exists(orderId))
+{
+    _logger.LogInformation(OrderAlreadyProcessed,
+        "Order already processed (idempotent). OrderId={OrderId}",
+        orderId);
+    return Result.AlreadyProcessed();
+}
+
+private static readonly EventId ValidationFailed = new(12002, nameof(ValidationFailed));
+private static readonly EventId OrderAlreadyProcessed = new(12003, nameof(OrderAlreadyProcessed));
+*-*
+
+Note:
+- Validation échouée : Warning (à surveiller, à améliorer).
+- Idempotence : Information (comportement normal, pas d'alerte).
+- EventId 12xxx : convention business.
+
+--
+### Mapping simple : Technique → Error
+
+*-*
+// Cas technique/infrastructure → Error
+catch (SqlException ex)
+{
+    _logger.LogError(DatabaseFailure, ex,
+        "Database connection failed. OrderId={OrderId}",
+        orderId);
+    throw; // Rethrow pour préserver stacktrace
+}
+
+catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.RequestTimeout)
+{
+    _logger.LogError(ExternalApiTimeout, ex,
+        "External API timeout. OrderId={OrderId} Endpoint={Endpoint}",
+        orderId, apiEndpoint);
+    throw;
+}
+
+private static readonly EventId DatabaseFailure = new(50001, nameof(DatabaseFailure));
+private static readonly EventId ExternalApiTimeout = new(50002, nameof(ExternalApiTimeout));
+*-*
+
+Note:
+- Exceptions techniques : Error (incident nécessitant investigation).
+- Rethrow avec `throw;` : préserve la stacktrace complète.
+- EventId 50xxx : convention technique.
+
+--
+### Middleware global : boundary ASP.NET Core
+
+*-*
+public class GlobalExceptionMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly ILogger<GlobalExceptionMiddleware> _logger;
+
+    public GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
+    {
+        _next = next;
+        _logger = logger;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        try
+        {
+            await _next(context);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(UnhandledException, ex,
+                "Unhandled exception. Path={Path} Method={Method} TraceId={TraceId}",
+                context.Request.Path, context.Request.Method, context.TraceIdentifier);
+            
+            context.Response.StatusCode = 500;
+            await context.Response.WriteAsJsonAsync(new { error = "Internal server error" });
+        }
+    }
+
+    private static readonly EventId UnhandledException = new(50000, nameof(UnhandledException));
+}
+*-*
+
+Note:
+- Middleware global : attrape uniquement les exceptions non gérées (techniques).
+- Error justifié : exception inattendue = incident technique.
+- TraceId : permet de corréler avec les autres logs de la requête.
+- À enregistrer dans Startup : `app.UseMiddleware<GlobalExceptionMiddleware>();`.
 
 ---
 
