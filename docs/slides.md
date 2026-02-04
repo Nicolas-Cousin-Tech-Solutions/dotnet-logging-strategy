@@ -75,6 +75,56 @@ Note:
 
 ---
 
+## Logs non structurés vs structurés
+**Problème avec les logs non structurés**
+- Concaténation de strings → difficile à parser/filtrer
+- Impossible de requêter efficacement sur des valeurs spécifiques
+- Perte de typage et de contexte
+
+Note:
+- Les logs non structurés = simple texte, difficile à exploiter par des outils.
+- Exemple typique : tout est dans une seule chaîne de caractères.
+- Conséquence : recherches approximatives, dashboards limités.
+
+--
+### ❌ Exemple — Log non structuré
+
+```csharp
+// ❌ Mauvais : concaténation de strings
+logger.LogWarning("Payment refused for order " + orderId + 
+    " and customer " + customerId + " due to insufficient funds");
+
+logger.LogError("Database connection failed while processing order " + 
+    orderId + " at " + DateTime.Now);
+```
+
+Note:
+- Tous les détails sont noyés dans le message.
+- Impossible de filtrer par OrderId ou CustomerId facilement.
+- Format peut varier selon les développeurs.
+- Parsing complexe pour les outils de monitoring.
+- Bonus anti-pattern : DateTime.Now au lieu de UtcNow (problèmes timezone).
+
+--
+### ✅ Exemple — Log structuré
+
+```csharp
+// ✅ Bon : propriétés structurées
+logger.LogWarning("Payment refused: insufficient funds. OrderId={OrderId} CustomerId={CustomerId}",
+    orderId, customerId);
+
+logger.LogError(ex, "Database connection failed. OrderId={OrderId}",
+    orderId);
+```
+
+Note:
+- Propriétés typées et indexables.
+- Filtrage facile : "tous les logs pour OrderId=12345".
+- Dashboards précis : taux d'erreur par CustomerId.
+- Format standardisé, lisible par humains ET machines.
+
+---
+
 ## Logs structurés + `EventId`
 - Propriétés obligatoires : OrderId, CustomerId, CorrelationId/TraceId
 - `EventId` pour classer, filtrer, dashboarder

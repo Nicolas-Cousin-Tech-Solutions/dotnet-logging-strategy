@@ -1,3 +1,11 @@
 **/node_modules/
 **/.pnpm-store/
 package-lock.json
+docs/reveal/.codespellrc
+docs/reveal/LICENSE
+docs/reveal/README.md
+docs/reveal/package.json
+docs/reveal/demo.html
+docs/reveal/index.html
+docs/reveal/css/
+docs/reveal/js/
